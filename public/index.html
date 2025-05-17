@@ -8,7 +8,7 @@
             margin: 0;
             padding: 40px;
             font-family: 'Arial', sans-serif;
-            background: transparent;
+            background-color: transparent;
             overflow: hidden;
         }
 
@@ -50,27 +50,14 @@
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
         }
 
-        /* Animation pour l'apparition/disparition */
         @keyframes fadeIn {
-            from { 
-                opacity: 0; 
-                transform: translateY(20px); 
-            }
-            to { 
-                opacity: 1; 
-                transform: translateY(0); 
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes fadeOut {
-            from { 
-                opacity: 1; 
-                transform: translateY(0); 
-            }
-            to { 
-                opacity: 0; 
-                transform: translateY(20px); 
-            }
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(20px); }
         }
 
         .fade-in {
@@ -94,9 +81,9 @@
     <script>
         let currentAudio = null;
         let lastMessageId = null;
-        let isGenerating = false;
+        let isProcessing = false;
         
-        function showMessage(username, message, voice, status) {
+        function showMessage(username, message, voice) {
             const container = document.getElementById('message-container');
             container.querySelector('.username').textContent = username;
             container.querySelector('.message').textContent = message;
@@ -105,6 +92,7 @@
             container.style.display = 'block';
             container.classList.remove('fade-out');
             container.classList.add('fade-in');
+            console.log('📝 Message affiché:', { username, message, voice });
         }
 
         function hideMessage() {
@@ -114,62 +102,74 @@
             setTimeout(() => {
                 container.style.display = 'none';
             }, 300);
+            console.log('🚫 Message caché');
         }
 
         async function playAudio(data) {
             try {
+                console.log('🎯 Début du traitement du message:', data);
                 const audio = document.getElementById('tts-audio');
                 
                 if (currentAudio) {
                     currentAudio.pause();
                 }
 
-                // Afficher le message immédiatement
-                showMessage(data.username, data.message, data.voice, 'ready');
+                // Attendre que le statut soit "ready" avant de continuer
+                while (data.status !== 'ready') {
+                    console.log('⏳ Attente de la génération audio...');
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    const response = await fetch('/current_message.json?' + Date.now());
+                    if (!response.ok) continue;
+                    data = await response.json();
+                }
 
-                // Configurer l'audio
-                audio.src = '/audio.mp3?' + new Date().getTime();
+                console.log('✅ Audio généré, début de la lecture');
+                showMessage(data.username, data.message, data.voice);
+
+                audio.src = '/audio.mp3?' + Date.now();
                 currentAudio = audio;
 
-                // Gérer la fin de la lecture
                 audio.onended = () => {
                     hideMessage();
                     currentAudio = null;
+                    isProcessing = false;
+                    console.log('⏹️ Lecture terminée');
                 };
 
-                // Lancer la lecture
                 await audio.play();
-                console.log('Lecture audio démarrée');
+                console.log('▶️ Lecture audio démarrée');
             } catch (error) {
-                console.error('Erreur de lecture:', error);
+                console.error('❌ Erreur de lecture:', error);
                 hideMessage();
                 currentAudio = null;
+                isProcessing = false;
             }
         }
 
         async function checkForNewMessage() {
-            if (isGenerating) return;
+            if (isProcessing) return;
             
             try {
-                const response = await fetch('/current_message.json?' + new Date().getTime());
+                const response = await fetch('/current_message.json?' + Date.now());
                 if (!response.ok) return;
                 
                 const data = await response.json();
                 
-                if (data.status === 'ready' && data.timestamp !== lastMessageId) {
+                if (data.timestamp && data.timestamp !== lastMessageId) {
+                    console.log('📥 Nouveau message détecté:', data);
                     lastMessageId = data.timestamp;
-                    isGenerating = true;
+                    isProcessing = true;
                     await playAudio(data);
-                    isGenerating = false;
                 }
             } catch (error) {
                 console.log('Pas de nouveau message');
-                isGenerating = false;
+                isProcessing = false;
             }
         }
 
-        // Vérifier plus fréquemment pour une meilleure réactivité
+        // Vérifier les nouveaux messages toutes les 200ms
         setInterval(checkForNewMessage, 200);
+        console.log('✅ Système TTS initialisé');
     </script>
 </body>
 </html>
