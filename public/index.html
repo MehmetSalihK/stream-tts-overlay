@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>TTS Overlay</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            font-family: 'Arial', sans-serif;
+            background: transparent;
+            overflow: hidden;
+        }
+
+        #message-container {
+            position: fixed;
+            bottom: 40px;
+            left: 40px;
+            right: 40px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            display: none;
+            font-size: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .username {
+            color: #ff9900;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 28px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .message {
+            color: #ffffff;
+            margin-bottom: 15px;
+            line-height: 1.4;
+            font-size: 26px;
+        }
+
+        .voice-info {
+            color: #00ff00;
+            font-style: italic;
+            font-size: 22px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Animation pour l'apparition/disparition */
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
+        @keyframes fadeOut {
+            from { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+            to { 
+                opacity: 0; 
+                transform: translateY(20px); 
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        .fade-out {
+            animation: fadeOut 0.3s ease forwards;
+        }
+    </style>
+</head>
+<body>
+    <div id="message-container">
+        <div class="username"></div>
+        <div class="message"></div>
+        <div class="voice-info"></div>
+    </div>
+
+    <audio id="tts-audio"></audio>
+
+    <script>
+        let currentAudio = null;
+        let lastMessageId = null;
+        let isGenerating = false;
+        
+        function showMessage(username, message, voice, status) {
+            const container = document.getElementById('message-container');
+            container.querySelector('.username').textContent = username;
+            container.querySelector('.message').textContent = message;
+            container.querySelector('.voice-info').textContent = `Lu par : ${voice}`;
+            
+            container.style.display = 'block';
+            container.classList.remove('fade-out');
+            container.classList.add('fade-in');
+        }
+
+        function hideMessage() {
+            const container = document.getElementById('message-container');
+            container.classList.remove('fade-in');
+            container.classList.add('fade-out');
+            setTimeout(() => {
+                container.style.display = 'none';
+            }, 300);
+        }
+
+        async function playAudio(data) {
+            try {
+                const audio = document.getElementById('tts-audio');
+                
+                if (currentAudio) {
+                    currentAudio.pause();
+                }
+
+                // Afficher le message immédiatement
+                showMessage(data.username, data.message, data.voice, 'ready');
+
+                // Configurer l'audio
+                audio.src = '/audio.mp3?' + new Date().getTime();
+                currentAudio = audio;
+
+                // Gérer la fin de la lecture
+                audio.onended = () => {
+                    hideMessage();
+                    currentAudio = null;
+                };
+
+                // Lancer la lecture
+                await audio.play();
+                console.log('Lecture audio démarrée');
+            } catch (error) {
+                console.error('Erreur de lecture:', error);
+                hideMessage();
+                currentAudio = null;
+            }
+        }
+
+        async function checkForNewMessage() {
+            if (isGenerating) return;
+            
+            try {
+                const response = await fetch('/current_message.json?' + new Date().getTime());
+                if (!response.ok) return;
+                
+                const data = await response.json();
+                
+                if (data.status === 'ready' && data.timestamp !== lastMessageId) {
+                    lastMessageId = data.timestamp;
+                    isGenerating = true;
+                    await playAudio(data);
+                    isGenerating = false;
+                }
+            } catch (error) {
+                console.log('Pas de nouveau message');
+                isGenerating = false;
+            }
+        }
+
+        // Vérifier plus fréquemment pour une meilleure réactivité
+        setInterval(checkForNewMessage, 200);
+    </script>
+</body>
+</html>
