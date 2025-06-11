@@ -46,33 +46,42 @@ Un **overlay Text-to-Speech (TTS)** interactif pour **Twitch**, permettant aux v
 ## 📋 Prérequis
 
 - [Node.js](https://nodejs.org/) v14+
-- [Python 3.8+](https://www.python.org/) (pour Coqui TTS)
+- Python ≥ 3.10 (installer depuis https://www.python.org/downloads/release/python-3109/)
 - Un compte Twitch
 - Token OAuth Twitch
-- Clé API ElevenLabs (facultative mais recommandée)
+- Clé API ElevenLabs (facultative)
 
 ---
 
 ## 🚀 Installation
 
-1. 📥 Cloner le dépôt :
-   ```bash
-   git clone <votre-repo>
-   cd ttt
+```bash
+git clone <votre-repo>
+cd stream-tts-overlay
 
-📦 Installer les dépendances Node.js :
-
-bash
-Copier
-Modifier
+# Installer les dépendances Node.js
 npm install
-🐍 Installer Coqui TTS :
 
-bash
-Copier
-Modifier
+# Créer et activer l'environnement virtuel Python 3.10
+py -3.10 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+# Installer la dépendance TTS
 pip install TTS
-⚙️ Configuration
+```
+
+### Lancer le serveur
+
+```bash
+node app.js
+```
+
+Veillez à rester dans l'environnement virtuel Python lors du lancement.
+
+---
+
+## ⚙️ Configuration
+
 Twitch
 Crée une app sur la console développeur Twitch
 
@@ -96,7 +105,10 @@ Dimensions : 1920x1080 (ajuste selon tes besoins)
 
 ✅ Active l’arrière-plan transparent
 
-🎮 Utilisation
+---
+
+## 🎮 Utilisation
+
 Pour les Streamers
 Lancer le serveur :
 
@@ -121,7 +133,10 @@ Exemples :
 
 !tts patrick Je veux un Krabby Patty !
 
-🔧 API
+---
+
+## 🔧 API
+
 Endpoints
 GET /current_message.json : retourne le message en cours
 
@@ -137,7 +152,11 @@ Modifier
   "voice": "nom_de_la_voix",
   "timestamp": "2024-01-20T12:00:00Z"
 }
-🎨 Personnalisation
+
+---
+
+## 🎨 Personnalisation
+
 Modifier le style de l'overlay
 Édite public/index.html :
 
@@ -156,7 +175,10 @@ Coqui TTS : ajoute la voix dans coquiVoices
 
 Google TTS : ajoute la voix dans gttsVoices
 
-❓ Dépannage
+---
+
+## ❓ Dépannage
+
 Aucun son ne sort :
 Vérifie les permissions du dossier public
 
@@ -171,7 +193,10 @@ Rafraîchis la source navigateur dans OBS
 
 Active bien l’arrière-plan transparent
 
-🤝 Contribuer
+---
+
+## 🤝 Contribuer
+
 Fork le projet
 
 Crée une branche :
@@ -194,11 +219,8 @@ Modifier
 git push origin feature/NouvelleFeature
 Ouvre une Pull Request 🚀
 
-📄 Licence
+---
+
+## 📄 Licence
+
 Ce projet est sous licence ISC. Voir le fichier LICENSE pour plus de détails.
-
-java
-Copier
-Modifier
-
-Si tu veux que je t’aide à le publier sur GitHub ou y inclure un badge (build, licence, etc.), dis-le-moi !
