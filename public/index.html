@@ -6,7 +6,7 @@
     <style>
         body {
             margin: 0;
-            padding: 40px;
+            padding: 0;
             font-family: 'Arial', sans-serif;
             background-color: transparent;
             overflow: hidden;
@@ -14,58 +14,62 @@
 
         #message-container {
             position: fixed;
-            bottom: 40px;
-            left: 40px;
-            right: 40px;
-            background: rgba(0, 0, 0, 0.5);
+            top: 20px;
+            left: 20px;
+            max-width: 60%;
+            background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(5px);
             color: white;
-            padding: 25px;
-            border-radius: 15px;
+            padding: 15px 20px;
+            border-radius: 10px;
             display: none;
-            font-size: 24px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transform: translateX(-120%);
+            z-index: 9999; /* Assurer que le message est au-dessus de tout */
+            opacity: 1;
+            visibility: visible;
         }
 
         .username {
             color: #ff9900;
             font-weight: bold;
-            margin-bottom: 10px;
-            font-size: 28px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 8px;
+            font-size: 22px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
         }
 
         .message {
             color: #ffffff;
-            margin-bottom: 15px;
-            line-height: 1.4;
-            font-size: 26px;
+            margin-bottom: 10px;
+            line-height: 1.3;
+            font-size: 20px;
         }
 
         .voice-info {
             color: #00ff00;
             font-style: italic;
-            font-size: 22px;
+            font-size: 16px;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes slideInFromLeft {
+            0% { transform: translateX(-120%); }
+            100% { transform: translateX(0); }
         }
 
-        @keyframes fadeOut {
-            from { opacity: 1; transform: translateY(0); }
-            to { opacity: 0; transform: translateY(20px); }
+        @keyframes slideOutToLeft {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-120%); }
         }
 
-        .fade-in {
-            animation: fadeIn 0.3s ease forwards;
+        .slide-in-left {
+            animation: slideInFromLeft 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
         }
 
-        .fade-out {
-            animation: fadeOut 0.3s ease forwards;
+        .slide-out-left {
+            animation: slideOutToLeft 0.8s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
         }
     </style>
 </head>
@@ -84,70 +88,373 @@
         let isProcessing = false;
         
         function showMessage(username, message, voice) {
-            const container = document.getElementById('message-container');
-            container.querySelector('.username').textContent = username;
-            container.querySelector('.message').textContent = message;
-            container.querySelector('.voice-info').textContent = `Lu par : ${voice}`;
+            console.log('📝 Tentative d\'affichage du message:', { username, message, voice });
             
+            // Vérifier si le conteneur existe, sinon le créer
+            let container = document.getElementById('message-container');
+            if (!container) {
+                console.log('⚠️ Conteneur de message non trouvé, création...');
+                container = document.createElement('div');
+                container.id = 'message-container';
+                document.body.appendChild(container);
+            }
+            
+            // Vérifier si les éléments enfants existent, sinon les créer
+            let usernameEl = container.querySelector('.username');
+            if (!usernameEl) {
+                console.log('⚠️ Élément username non trouvé, création...');
+                usernameEl = document.createElement('div');
+                usernameEl.className = 'username';
+                container.appendChild(usernameEl);
+            }
+            
+            let messageEl = container.querySelector('.message');
+            if (!messageEl) {
+                console.log('⚠️ Élément message non trouvé, création...');
+                messageEl = document.createElement('div');
+                messageEl.className = 'message';
+                container.appendChild(messageEl);
+            }
+            
+            let voiceEl = container.querySelector('.voice-info');
+            if (!voiceEl) {
+                console.log('⚠️ Élément voice-info non trouvé, création...');
+                voiceEl = document.createElement('div');
+                voiceEl.className = 'voice-info';
+                container.appendChild(voiceEl);
+            }
+            
+            // Définir le contenu avec des valeurs par défaut si nécessaire
+            usernameEl.textContent = username || 'Utilisateur';
+            messageEl.textContent = message || 'Message';
+            voiceEl.textContent = voice ? `Lu par : ${voice}` : 'Lu par : voix par défaut';
+            
+            // Forcer la visibilité avec plusieurs propriétés CSS
             container.style.display = 'block';
-            container.classList.remove('fade-out');
-            container.classList.add('fade-in');
+            container.style.opacity = '1';
+            container.style.visibility = 'visible';
+            container.style.zIndex = '9999';
+            
+            // Ajouter l'animation
+            container.classList.remove('slide-out-left');
+            container.classList.add('slide-in-left');
+            
+            // Vérifier si le conteneur est réellement visible
+            setTimeout(() => {
+                const isVisible = window.getComputedStyle(container).display !== 'none' && 
+                                window.getComputedStyle(container).opacity !== '0' &&
+                                window.getComputedStyle(container).visibility !== 'hidden';
+                console.log('📝 Vérification de visibilité:', { 
+                    isVisible, 
+                    display: window.getComputedStyle(container).display,
+                    opacity: window.getComputedStyle(container).opacity,
+                    visibility: window.getComputedStyle(container).visibility,
+                    width: container.offsetWidth,
+                    height: container.offsetHeight,
+                    position: `${container.offsetLeft},${container.offsetTop}`
+                });
+            }, 100);
+            
             console.log('📝 Message affiché:', { username, message, voice });
         }
 
         function hideMessage() {
             const container = document.getElementById('message-container');
-            container.classList.remove('fade-in');
-            container.classList.add('fade-out');
+            
+            // Vérifier si le conteneur existe
+            if (!container) {
+                console.log('⚠️ Tentative de cacher un message mais le conteneur n\'existe pas');
+                return;
+            }
+            
+            // Vérifier si le message est déjà caché
+            const isHidden = container.style.display === 'none' || 
+                           container.style.opacity === '0' || 
+                           container.style.visibility === 'hidden' ||
+                           container.classList.contains('slide-out-left');
+            
+            if (isHidden) {
+                console.log('ℹ️ Le message est déjà caché, aucune action nécessaire');
+                return;
+            }
+            
+            console.log('🚫 Début du processus pour cacher le message');
+            container.classList.remove('slide-in-left');
+            container.classList.add('slide-out-left');
+            
             setTimeout(() => {
                 container.style.display = 'none';
-            }, 300);
-            console.log('🚫 Message caché');
+                container.style.opacity = '0';
+                container.style.visibility = 'hidden';
+                console.log('🚫 Message caché');
+                
+                // Vérifier si le message est réellement caché
+                setTimeout(() => {
+                    const isReallyHidden = container.style.display === 'none' || 
+                                         window.getComputedStyle(container).opacity === '0' ||
+                                         window.getComputedStyle(container).visibility === 'hidden';
+                    console.log('🚫 Vérification de masquage:', { isReallyHidden });
+                }, 100);
+            }, 800);
         }
 
         async function playAudio(data) {
             try {
                 console.log('🎯 Début du traitement du message:', data);
-                const audio = document.getElementById('tts-audio');
                 
+                // Vérifier si l'élément audio existe, sinon le créer
+                let audio = document.getElementById('tts-audio');
+                if (!audio) {
+                    console.log('⚠️ Élément audio non trouvé, création...');
+                    audio = document.createElement('audio');
+                    audio.id = 'tts-audio';
+                    document.body.appendChild(audio);
+                }
+                
+                // Arrêter l'audio précédent et nettoyer
                 if (currentAudio) {
+                    console.log('⏹️ Arrêt de l\'audio précédent');
                     currentAudio.pause();
+                    currentAudio.src = '';
+                    currentAudio.load();
                 }
 
-                // Attendre que le statut soit "ready" avant de continuer
-                while (data.status !== 'ready') {
-                    console.log('⏳ Attente de la génération audio...');
+                // Stocker l'ID du message actuel pour vérification
+                const currentMessageId = data.timestamp;
+                console.log(`📌 Traitement du message ID: ${currentMessageId}`);
+
+                // Attendre que le statut soit "ready" avant de continuer (avec timeout)
+                let attempts = 0;
+                const maxAttempts = 50; // 5 secondes maximum d'attente
+                
+                while (data.status !== 'ready' && attempts < maxAttempts) {
+                    console.log(`⏳ Attente de la génération audio... (tentative ${attempts+1}/${maxAttempts})`);
                     await new Promise(resolve => setTimeout(resolve, 100));
-                    const response = await fetch('/current_message.json?' + Date.now());
-                    if (!response.ok) continue;
-                    data = await response.json();
+                    try {
+                        const response = await fetch('/current_message.json?' + Date.now());
+                        if (!response.ok) {
+                            console.log('⚠️ Erreur lors de la récupération du statut:', response.status);
+                            continue;
+                        }
+                        data = await response.json();
+                        
+                        // Vérifier si le message a changé pendant l'attente
+                        if (data.timestamp !== currentMessageId) {
+                            console.log('⚠️ Le message a changé pendant l\'attente, abandon du traitement');
+                            return; // Sortir de la fonction, un nouveau message sera traité par checkForNewMessage
+                        }
+                    } catch (fetchError) {
+                        console.error('❌ Erreur lors de la récupération du statut:', fetchError);
+                    }
+                    attempts++;
+                }
+                
+                // Si on a atteint le nombre maximum de tentatives sans succès
+                if (attempts >= maxAttempts && data.status !== 'ready') {
+                    console.error('⚠️ Timeout: La génération audio a pris trop de temps ou a échoué');
+                    // On continue quand même pour essayer de lire l'audio s'il existe
                 }
 
                 console.log('✅ Audio généré, début de la lecture');
-                showMessage(data.username, data.message, data.voice);
-
-                audio.src = '/audio.mp3?' + Date.now();
+                
+                // Déterminer l'URL du fichier audio à utiliser
+                let audioUrl;
+                if (data.audioFile) {
+                    // Utiliser le fichier audio spécifique indiqué dans le message
+                    audioUrl = '/' + data.audioFile + '?' + Date.now();
+                    console.log(`🔊 Utilisation du fichier audio spécifique: ${data.audioFile}`);
+                } else {
+                    // Fallback vers le fichier audio.mp3 standard
+                    audioUrl = '/audio.mp3?' + Date.now();
+                    console.log('🔊 Utilisation du fichier audio standard (audio.mp3)');
+                }
+                
+                // Vérifier si le fichier audio existe et a une taille correcte
+                try {
+                    const fileCheck = await fetch(audioUrl, { method: 'HEAD' });
+                    if (!fileCheck.ok) {
+                        console.error('❌ Le fichier audio n\'existe pas:', fileCheck.status);
+                        throw new Error('Fichier audio non trouvé');
+                    }
+                    
+                    const contentLength = fileCheck.headers.get('content-length');
+                    if (contentLength && parseInt(contentLength) < 100) {
+                        console.error('❌ Le fichier audio est trop petit:', contentLength, 'octets');
+                        throw new Error('Fichier audio invalide (trop petit)');
+                    }
+                    
+                    console.log('✅ Vérification du fichier audio réussie:', contentLength, 'octets');
+                } catch (fileError) {
+                    console.error('❌ Erreur lors de la vérification du fichier audio:', fileError);
+                    // On continue quand même pour essayer d'afficher le message
+                }
+                
+                // Vérifier une dernière fois que le message n'a pas changé
+                try {
+                    const finalCheck = await fetch('/current_message.json?' + Date.now());
+                    if (finalCheck.ok) {
+                        const latestData = await finalCheck.json();
+                        if (latestData.timestamp !== currentMessageId) {
+                            console.log('⚠️ Le message a changé avant la lecture, abandon');
+                            return; // Sortir de la fonction
+                        }
+                    }
+                } catch (checkError) {
+                    console.error('❌ Erreur lors de la vérification finale:', checkError);
+                }
+                
+                // Définir la source audio
+                audio.src = audioUrl;
                 currentAudio = audio;
-
+                
+                // Configurer les événements de chargement audio
+                let audioLoaded = false;
+                const audioLoadTimeout = setTimeout(() => {
+                    if (!audioLoaded) {
+                        console.error('⚠️ Timeout: Le chargement audio a pris trop de temps');
+                        // Afficher quand même le message
+                        showMessage(data.username, data.message, data.voice);
+                    }
+                }, 5000); // 5 secondes de timeout
+                
+                audio.oncanplay = () => {
+                    console.log('🔊 Audio prêt à être joué (oncanplay)');
+                    audioLoaded = true;
+                };
+                
+                audio.oncanplaythrough = () => {
+                    console.log('🔊 Audio complètement chargé (oncanplaythrough)');
+                    clearTimeout(audioLoadTimeout);
+                    audioLoaded = true;
+                };
+                
+                audio.onloadstart = () => {
+                    console.log('🔊 Début du chargement audio (onloadstart)');
+                };
+                
+                audio.ondurationchange = () => {
+                    console.log('🔊 Durée audio détectée:', audio.duration, 'secondes');
+                };
+                
+                audio.onerror = (e) => {
+                    console.error('❌ Erreur de chargement audio:', e);
+                    clearTimeout(audioLoadTimeout);
+                    // Afficher quand même le message
+                    showMessage(data.username, data.message, data.voice);
+                };
+                
+                audio.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        const percentComplete = (e.loaded / e.total) * 100;
+                        console.log(`🔄 Chargement audio: ${percentComplete.toFixed(1)}%`);
+                    }
+                };
+                
                 audio.onended = () => {
+                    // Ajouter un délai de 4 secondes avant de cacher le message
+                    console.log('⏹️ Lecture terminée, attente de 4 secondes avant de cacher le message');
+                    setTimeout(() => {
+                        hideMessage();
+                        currentAudio = null;
+                        isProcessing = false;
+                        console.log('🚫 Message caché après délai');
+                    }, 4000); // 4 secondes de délai
+                };
+                
+                // Afficher le message AVANT de tenter de jouer l'audio
+                if (data && data.username && data.message) {
+                    showMessage(data.username, data.message, data.voice);
+                } else {
+                    console.error('❌ Données de message invalides:', data);
+                }
+                
+                // Vérifier si l'audio est dans un état jouable
+                const readyStateText = [
+                    'HAVE_NOTHING (0) - Aucune information disponible',
+                    'HAVE_METADATA (1) - Métadonnées disponibles',
+                    'HAVE_CURRENT_DATA (2) - Données disponibles pour la position actuelle',
+                    'HAVE_FUTURE_DATA (3) - Données disponibles pour la position actuelle et future',
+                    'HAVE_ENOUGH_DATA (4) - Assez de données disponibles'
+                ];
+                
+                console.log(`🔊 État de l'audio avant lecture: ${readyStateText[audio.readyState] || 'Inconnu'}`);
+                
+                // Tenter de jouer l'audio
+                try {
+                    audio.onplay = () => console.log('▶️ Événement onplay déclenché');
+                    audio.onplaying = () => console.log('▶️ Événement onplaying déclenché');
+                    
+                    await audio.play();
+                    console.log('▶️ Lecture audio démarrée avec succès');
+                } catch (playError) {
+                    console.error('❌ Erreur lors de la lecture audio:', playError);
+                    console.log('⚠️ Tentative de rechargement et relecture après une pause...');
+                    
+                    // Tenter de recharger et rejouer après une courte pause
+                    setTimeout(async () => {
+                        try {
+                            audio.load();
+                            await audio.play();
+                            console.log('▶️ Relecture audio réussie après rechargement');
+                        } catch (retryError) {
+                            console.error('❌ Échec de la relecture audio:', retryError);
+                            // Configurer un timeout pour cacher le message même si l'audio ne peut pas être joué
+                            setTimeout(() => {
+                                hideMessage();
+                                currentAudio = null;
+                                isProcessing = false;
+                                console.log('🚫 Message caché après échec de lecture audio');
+                            }, 8000); // 8 secondes d'affichage
+                        }
+                    }, 1000); // Attendre 1 seconde avant de réessayer
+                }
+            } catch (error) {
+                console.error('❌ Erreur générale:', error);
+                // Tenter d'afficher le message malgré l'erreur
+                if (data && data.username && data.message) {
+                    showMessage(data.username, data.message, data.voice);
+                }
+                // Nettoyer l'état
+                setTimeout(() => {
                     hideMessage();
                     currentAudio = null;
                     isProcessing = false;
-                    console.log('⏹️ Lecture terminée');
-                };
-
-                await audio.play();
-                console.log('▶️ Lecture audio démarrée');
-            } catch (error) {
-                console.error('❌ Erreur de lecture:', error);
-                hideMessage();
-                currentAudio = null;
-                isProcessing = false;
+                }, 8000); // 8 secondes d'affichage en cas d'erreur
             }
         }
 
         async function checkForNewMessage() {
-            if (isProcessing) return;
+            if (isProcessing) {
+                // Si un nouveau message est détecté pendant le traitement, interrompre le traitement actuel
+                try {
+                    const response = await fetch('/current_message.json?' + Date.now());
+                    if (!response.ok) return;
+                    
+                    const data = await response.json();
+                    
+                    if (data.timestamp && data.timestamp !== lastMessageId) {
+                        console.log('📥 Nouveau message détecté pendant le traitement, interruption:', data);
+                        // Arrêter l'audio actuel
+                        if (currentAudio) {
+                            currentAudio.pause();
+                            currentAudio.src = '';
+                            currentAudio.load();
+                            currentAudio = null;
+                        }
+                        // Cacher le message actuel
+                        hideMessage();
+                        // Réinitialiser l'état
+                        isProcessing = false;
+                        // Traiter le nouveau message
+                        lastMessageId = data.timestamp;
+                        isProcessing = true;
+                        await playAudio(data);
+                    }
+                } catch (error) {
+                    console.log('Erreur lors de la vérification de nouveaux messages pendant le traitement:', error);
+                }
+                return;
+            }
             
             try {
                 const response = await fetch('/current_message.json?' + Date.now());
