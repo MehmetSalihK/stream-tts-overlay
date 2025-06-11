@@ -1,0 +1,19 @@
+# Dépendances
+node_modules/
+.venv/
+
+# Variables d'environnement
+.env
+
+# Fichiers générés
+public/audio.mp3
+public/current_message.json
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Système d'exploitation
+.DS_Store
+Thumbs.db

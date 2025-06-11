@@ -5,10 +5,12 @@ const path = require('path');
 const fetch = require('node-fetch');
 const gtts = require('node-gtts');
 const { exec } = require('child_process');
+require('dotenv').config();
 
 // === Configuration ===
-const CHANNEL_NAME = 'msketur60';
-const ELEVENLABS_API_KEY = 'sk_fb4c284787cbebc89609047308235ddc70ee03e708f986b5';
+const CHANNEL_NAME = process.env.CHANNEL_NAME;
+const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
+const PORT = process.env.PORT || 3000;
 
 const voices = {
   vieuxpere: 't4fHUMAMZxaaV2inHOnb',
@@ -40,8 +42,8 @@ const gttsVoices = {
 const app = express();
 app.use(express.static('public'));
 
-app.listen(3000, () => {
-  console.log('✅ Serveur démarré sur http://localhost:3000');
+app.listen(PORT, () => {
+  console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
 });
 
 // === Connexion Twitch ===
@@ -49,7 +51,7 @@ const client = new tmi.Client({
   options: { debug: true },
   identity: {
     username: CHANNEL_NAME,
-    password: 'oauth:plz3eii9jwdsr1fb4f38z5gdntv4je'
+    password: `oauth:${process.env.TWITCH_OAUTH_TOKEN}`
   },
   connection: { reconnect: true, secure: true },
   channels: [CHANNEL_NAME]
